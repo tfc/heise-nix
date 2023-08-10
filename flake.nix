@@ -4,6 +4,7 @@
   inputs = {
     flake-parts.url = "github:hercules-ci/flake-parts";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
   };
 
   outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } {
@@ -16,6 +17,7 @@
     perSystem = { config, pkgs, system, ... }: {
       devShells.default = pkgs.mkShell {
         inputsFrom = builtins.attrValues config.checks;
+        inherit (config.checks.pre-commit-check) shellHook;
       };
 
       packages = {
@@ -37,6 +39,25 @@
           hello-cpp
           hello-rust
           ;
+
+        pre-commit-check = inputs.pre-commit-hooks.lib.${system}.run {
+          src = ./.;
+          hooks = {
+            # Rust
+            clippy.enable = true;
+            rustfmt.enable = true;
+
+            # Nix
+            deadnix.enable = true;
+            nixpkgs-fmt.enable = true;
+            statix.enable = true;
+
+            # Shell
+            shellcheck.enable = true;
+            shfmt.enable = true;
+          };
+          settings.rust.cargoManifestPath = "./rust/Cargo.toml";
+        };
       };
     };
   };
