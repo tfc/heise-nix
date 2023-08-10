@@ -15,12 +15,7 @@
     ];
     perSystem = { config, pkgs, system, ... }: {
       devShells.default = pkgs.mkShell {
-        buildInputs = with pkgs; [
-          boost
-          cmake
-          cargo
-          rustc
-        ];
+        inputsFrom = builtins.attrValues config.checks;
       };
 
       packages = {
