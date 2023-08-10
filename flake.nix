@@ -22,6 +22,7 @@
           rustc
         ];
       };
+
       packages = {
         hello-cpp = pkgs.stdenv.mkDerivation {
           name = "hello-cpp";
@@ -34,6 +35,13 @@
           src = ./rust;
           cargoLock.lockFile = ./rust/Cargo.lock;
         };
+      };
+
+      checks = {
+        inherit (config.packages)
+          hello-cpp
+          hello-rust
+          ;
       };
     };
   };
