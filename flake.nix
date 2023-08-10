@@ -1,9 +1,24 @@
 {
-  description = "A very basic flake";
+  description = "Heise Nix Example Project";
 
-  outputs = { self, nixpkgs }: {
-    packages.x86_64-linux.hello = nixpkgs.legacyPackages.x86_64-linux.hello;
-
-    packages.x86_64-linux.default = self.packages.x86_64-linux.hello;
-  };
+  outputs = { self, nixpkgs }:
+    let
+      system = "x86_64-linux";
+      pkgs = nixpkgs.legacyPackages.${system};
+    in {
+      devShells.${system}.default = pkgs.mkShell {
+        buildInputs = with pkgs; [
+          boost
+          cmake
+        ];
+      };
+      packages.${system} = {
+        hello-cpp = pkgs.stdenv.mkDerivation {
+          name = "hello-cpp";
+          src = ./cpp;
+          nativeBuildInputs = [ pkgs.cmake ];
+          buildInputs = [ pkgs.boost ];
+        };
+      };
+    };
 }
