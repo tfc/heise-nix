@@ -38,17 +38,18 @@
             buildInputs = [ pkgs.boost ];
           };
           hello-rust = craneLib.buildPackage { inherit cargoArtifacts src; };
+
+          hello-rust-doc = craneLib.cargoDoc {
+            inherit cargoArtifacts src;
+          };
         };
 
         checks = {
           inherit (config.packages)
             hello-cpp
             hello-rust
+            hello-rust-doc
             ;
-
-          hello-rust-doc = craneLib.cargoDoc {
-            inherit cargoArtifacts src;
-          };
 
           hello-rust-audit = craneLib.cargoAudit {
             inherit (inputs) advisory-db;
