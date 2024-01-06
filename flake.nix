@@ -26,7 +26,7 @@
       in
       {
         devShells.default = pkgs.mkShell {
-          inputsFrom = builtins.attrValues config.checks;
+          inputsFrom = [ config.packages.hello-cpp config.packages.hello-rust ];
           inherit (config.checks.pre-commit-check) shellHook;
         };
 
@@ -44,13 +44,7 @@
           };
         };
 
-        checks = {
-          inherit (config.packages)
-            hello-cpp
-            hello-rust
-            hello-rust-doc
-            ;
-
+        checks = config.packages // {
           hello-rust-audit = craneLib.cargoAudit {
             inherit (inputs) advisory-db;
             inherit src;
