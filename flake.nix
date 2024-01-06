@@ -34,6 +34,7 @@
 
         packages = {
           hello-cpp = pkgs.callPackage ./package-cpp.nix { };
+          hello-cpp-windows = pkgs.pkgsCross.mingwW64.callPackage ./package-cpp.nix { };
 
           hello-rust = craneLib.buildPackage { inherit cargoArtifacts src; };
 
