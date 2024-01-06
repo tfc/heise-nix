@@ -9,6 +9,8 @@
     advisory-db.flake = false;
     crane.url = "github:ipetkov/crane";
     crane.inputs.nixpkgs.follows = "nixpkgs";
+    rust-overlay.url = "github:oxalica/rust-overlay";
+    rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } {
@@ -50,6 +52,32 @@
             tag = "latest";
             config.Cmd = [ "${config.packages.hello-rust}/bin/hello-rust" ];
           };
+
+          hello-rust-static =
+            let
+              rustPkgs = import inputs.nixpkgs {
+                inherit system;
+                overlays = [ (import inputs.rust-overlay) ];
+              };
+
+              archPrefix = builtins.elemAt (pkgs.lib.strings.split "-" system) 0;
+              target = "${archPrefix}-unknown-linux-musl";
+
+              staticCraneLib =
+                let
+                  rustToolchain = rustPkgs.rust-bin.stable.latest.default.override {
+                    targets = [ target ];
+                  };
+                in
+                (inputs.crane.mkLib rustPkgs).overrideToolchain rustToolchain;
+            in
+            staticCraneLib.buildPackage {
+              inherit src;
+
+              CARGO_BUILD_TARGET = target;
+              CARGO_BUILD_RUSTFLAGS = "-C target-feature=+crt-static";
+            };
+
         } // lib.optionalAttrs (system != "x86_64-darwin") {
           # There is no `targetPackages.darwin.LibsystemCross` for x86_64 darwin
           hello-cpp-static = pkgs.pkgsStatic.callPackage ./package-cpp.nix { };
