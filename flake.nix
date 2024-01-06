@@ -18,7 +18,7 @@
       "x86_64-darwin"
       "aarch64-darwin"
     ];
-    perSystem = { config, pkgs, system, ... }:
+    perSystem = { config, pkgs, lib, system, ... }:
       let
         craneLib = inputs.crane.lib.${system};
         src = craneLib.cleanCargoSource (craneLib.path ./rust);
@@ -31,17 +31,17 @@
         };
 
         packages = {
-          hello-cpp = pkgs.stdenv.mkDerivation {
-            name = "hello-cpp";
-            src = ./cpp;
-            nativeBuildInputs = [ pkgs.cmake ];
-            buildInputs = [ pkgs.boost ];
-          };
+          hello-cpp = pkgs.callPackage ./package-cpp.nix { };
+
           hello-rust = craneLib.buildPackage { inherit cargoArtifacts src; };
 
           hello-rust-doc = craneLib.cargoDoc {
             inherit cargoArtifacts src;
           };
+        } // lib.optionalAttrs (system != "x86_64-darwin") {
+          # There is no `targetPackages.darwin.LibsystemCross` for x86_64 darwin
+
+          hello-cpp-static = pkgs.pkgsStatic.callPackage ./package-cpp.nix { };
         };
 
         checks = config.packages // {
