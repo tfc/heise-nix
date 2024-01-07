@@ -18,7 +18,7 @@
       "x86_64-darwin"
       "aarch64-darwin"
     ];
-    perSystem = { config, pkgs, system, ... }:
+    perSystem = { config, pkgs, lib, system, ... }:
       let
         craneLib = inputs.crane.lib.${system};
         src = craneLib.cleanCargoSource (craneLib.path ./rust);
@@ -41,6 +41,18 @@
 
           hello-rust-doc = craneLib.cargoDoc {
             inherit cargoArtifacts src;
+          };
+        } // lib.optionalAttrs (lib.hasSuffix "linux" system) {
+          hello-cpp-docker = pkgs.dockerTools.buildLayeredImage {
+            name = "hello-cpp";
+            tag = "latest";
+            config.Cmd = [ "${config.packages.hello-cpp}/bin/hello-cpp" ];
+          };
+
+          hello-rust-docker = pkgs.dockerTools.buildLayeredImage {
+            name = "hello-rust";
+            tag = "latest";
+            config.Cmd = [ "${config.packages.hello-rust}/bin/hello-rust" ];
           };
         };
 
