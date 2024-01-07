@@ -80,6 +80,43 @@
               CARGO_BUILD_TARGET = target;
               CARGO_BUILD_RUSTFLAGS = "-C target-feature=+crt-static";
             };
+
+          hello-rust-cross =
+            let
+              crossPkgs =
+                let
+                  crossMap = {
+                    x86_64-linux = "aarch64-linux";
+                    aarch64-linux = "x86_64-linux";
+                  };
+                  crossSystem = crossMap.${system};
+                in
+                import inputs.nixpkgs {
+                  inherit crossSystem;
+                  localSystem = system;
+                  overlays = [ (import inputs.rust-overlay) ];
+                };
+              target = crossPkgs.stdenv.targetPlatform.config;
+              inherit (crossPkgs.stdenv.targetPlatform.rust) cargoEnvVarTarget;
+
+              craneLib =
+                let
+                  rustToolchain = crossPkgs.pkgsBuildHost.rust-bin.stable.latest.default.override {
+                    targets = [ target ];
+                  };
+                in
+                (inputs.crane.mkLib crossPkgs).overrideToolchain rustToolchain;
+
+              crateExpression = { stdenv }:
+                craneLib.buildPackage {
+                  inherit src;
+
+                  "CARGO_TARGET_${cargoEnvVarTarget}_LINKER" = "${stdenv.cc.targetPrefix}cc";
+                  CARGO_BUILD_TARGET = target;
+                  HOST_CC = "${stdenv.cc.nativePrefix}cc";
+                };
+            in
+            crossPkgs.callPackage crateExpression { };
         };
 
         checks = config.packages // {
