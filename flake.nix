@@ -117,6 +117,16 @@
                 };
             in
             crossPkgs.callPackage crateExpression { };
+
+          hello-cpp-docker = pkgs.dockerTools.buildLayeredImage {
+            name = "hello-cpp";
+            config.Cmd = [ "${config.packages.hello-cpp}/bin/hello-cpp" ];
+          };
+
+          hello-rust-docker = pkgs.dockerTools.buildLayeredImage {
+            name = "hello-rust";
+            config.Cmd = [ "${config.packages.hello-rust}/bin/hello-rust" ];
+          };
         };
 
         checks = config.packages // {
