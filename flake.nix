@@ -88,7 +88,42 @@
             in
             crossMap.${arch}.callPackage ./package-cpp.nix { };
 
+          hello-rust-cross-arch =
+            let
+              crossPkgs =
+                let
+                  crossMap = {
+                    x86_64-linux = "aarch64-linux";
+                    aarch64-linux = "x86_64-linux";
+                  };
+                  crossSystem = crossMap.${system};
+                in
+                import inputs.nixpkgs {
+                  inherit crossSystem;
+                  localSystem = system;
+                  overlays = [ (import inputs.rust-overlay) ];
+                };
+              inherit (crossPkgs.stdenv.targetPlatform.rust)
+                cargoEnvVarTarget cargoShortTarget;
 
+              craneLib =
+                let
+                  rustToolchain = crossPkgs.pkgsBuildHost.rust-bin.stable.latest.default.override {
+                    targets = [ cargoShortTarget ];
+                  };
+                in
+                (inputs.crane.mkLib crossPkgs).overrideToolchain rustToolchain;
+
+              crateExpression = { stdenv }:
+                craneLib.buildPackage {
+                  inherit src;
+
+                  "CARGO_TARGET_${cargoEnvVarTarget}_LINKER" = "${stdenv.cc.targetPrefix}cc";
+                  CARGO_BUILD_TARGET = cargoShortTarget;
+                  HOST_CC = "${stdenv.cc.nativePrefix}cc";
+                };
+            in
+            crossPkgs.callPackage crateExpression { };
         } // lib.optionalAttrs (system != "x86_64-darwin") {
           # There is no `targetPackages.darwin.LibsystemCross` for x86_64 darwin
           hello-cpp-static = pkgs.pkgsStatic.callPackage ./package-cpp.nix { };
