@@ -188,4 +188,9 @@
         };
       };
   };
+
+  nixConfig = {
+    extra-substituters = [ "https://tfc.cachix.org" ];
+    extra-trusted-public-keys = [ "tfc.cachix.org-1:/Jv9MJ7k1NbTJbQom0s3f3B/B0IxZyc6rNil883XX14=" ];
+  };
 }
