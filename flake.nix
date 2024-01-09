@@ -78,6 +78,17 @@
               CARGO_BUILD_RUSTFLAGS = "-C target-feature=+crt-static";
             };
 
+          hello-cpp-cross-arch =
+            let
+              crossMap = {
+                aarch64 = pkgs.pkgsCross.gnu64;
+                x86_64 = pkgs.pkgsCross.aarch64-multiplatform;
+              };
+              arch = builtins.elemAt (lib.splitString "-" system) 0;
+            in
+            crossMap.${arch}.callPackage ./package-cpp.nix { };
+
+
         } // lib.optionalAttrs (system != "x86_64-darwin") {
           # There is no `targetPackages.darwin.LibsystemCross` for x86_64 darwin
           hello-cpp-static = pkgs.pkgsStatic.callPackage ./package-cpp.nix { };
